@@ -1,7 +1,10 @@
 package interfaces
 
 type Observer interface {
-	Handle(interface{})
+	Handler
+	OnNext(interface{})
+	OnError(error)
+	OnDone()
 }
 
 

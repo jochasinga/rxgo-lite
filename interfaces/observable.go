@@ -2,7 +2,7 @@ package interfaces
 
 type Observable interface {
 	Iterable
-	Subscribe(Observer) <-chan struct{}
+	Subscribe(Observer) <-chan IteratorResult
 }
 
 

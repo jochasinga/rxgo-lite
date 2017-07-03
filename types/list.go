@@ -9,6 +9,15 @@ type List struct {
 	index int
 }
 
+type SubscriptionResult struct {
+	err interface{}
+	done bool
+}
+
+func (re *SubscriptionResult) Result() (interface{}, bool) {
+	return re.err, re.done
+}
+
 func NewList(items []interface{}) *List {
 	if items != nil {
 		return &List{list: items}
@@ -35,17 +44,26 @@ func (li *List) Filter(filterable interfaces.FilterableFunc) interfaces.Iterable
 	return _li
 }
 
-func (li *List) Subscribe(ob interfaces.Observer) <-chan struct{} {
-	done := make(chan struct{})
+func (li *List) Subscribe(ob interfaces.Observer) <-chan interfaces.IteratorResult {
+	done := make(chan interfaces.IteratorResult)
+	sub := new(SubscriptionResult)
+	count := 0
 
 	go func() {
-		for _, val := range li.list {
+		for i, val := range li.list {
+			count = i
 			ob.Handle(val)
+			if err, ok := val.(error); ok {
+				sub.err = err
+				break
+			}
 		}
-		done <- struct{}{}
+		if count == len(li.list) - 1 {
+			sub.done = !sub.done
+		} 
+		done <- sub
 		close(done)
 	}()
-
 	return done
 }
 
